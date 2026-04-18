@@ -33,12 +33,14 @@ impl IjazahContract {
             panic!("Already initialized");
         }
         env.storage().instance().set(&ADMIN, &admin);
-        let empty_insts: Map<Address, bool> = Map::new(&env);
-        env.storage().instance().set(&INSTS, &empty_insts);
-        let empty_certs: Map<u64, Certificate> = Map::new(&env);
-        env.storage().instance().set(&CERTS, &empty_certs);
-        let empty_owner: Map<Address, Vec<u64>> = Map::new(&env);
-        env.storage().instance().set(&OWNER, &empty_owner);
+
+        // Automatically authorize the admin as the first institution
+        let mut insts: Map<Address, bool> = Map::new(&env);
+        insts.set(admin, true);
+        env.storage().instance().set(&INSTS, &insts);
+
+        env.storage().instance().set(&CERTS, &Map::<u64, Certificate>::new(&env));
+        env.storage().instance().set(&OWNER, &Map::<Address, Vec<u64>>::new(&env));
     }
 
     pub fn register_institution(env: Env, caller: Address, institution: Address) {

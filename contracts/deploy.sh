@@ -47,13 +47,4 @@ stellar contract invoke \
   -- initialize \
   --admin "$ADMIN_ADDRESS"
 
-echo "=== Daftarkan institusi ==="
-stellar contract invoke \
-  --id "$CONTRACT_ID" \
-  --source-account alice \
-  --network testnet \
-  -- register_institution \
-  --caller "$ADMIN_ADDRESS" \
-  --institution "$ADMIN_ADDRESS"
-
 echo "✅ Deploy selesai! Contract ID: $CONTRACT_ID"

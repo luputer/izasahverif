@@ -1,474 +1,149 @@
 import { useState, useEffect } from "react";
 import { nativeToScVal, Address } from "@stellar/stellar-sdk";
 import { useContract } from "./hooks/useContract";
+import {
+  Search,
+  Wallet,
+  LogOut,
+  GraduationCap,
+  Plus,
+  ShieldCheck,
+  History,
+  AlertCircle,
+  CheckCircle2,
+  Loader2,
+  Shield,
+  Copy,
+  Check,
+  ExternalLink,
+} from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 // ─── Helpers ──────────────────────────────────────────────────
-function shortAddr(addr) {
-  return addr ? `${addr.slice(0, 4)}...${addr.slice(-4)}` : "";
+function shortAddr(addr: string) {
+  return addr ? `${addr.slice(0, 6)}...${addr.slice(-4)}` : "";
 }
-function formatDate(ts) {
+
+function formatDate(ts: any) {
   if (!ts) return "-";
-  return new Date(Number(ts) * 1000).toLocaleDateString("id-ID", {
-    day: "numeric", month: "long", year: "numeric",
+  return new Date(Number(ts) * 1000).toLocaleDateString("en-US", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
   });
 }
 
-// ─── CSS ──────────────────────────────────────────────────────
-const CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap');
-
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --bg:       #0a0a0f;
-    --surface:  #111118;
-    --border:   #1e1e2e;
-    --border2:  #2a2a3e;
-    --accent:   #7c6ef2;
-    --accent2:  #a78bfa;
-    --green:    #34d399;
-    --red:      #f87171;
-    --text:     #e2e0ff;
-    --muted:    #6b6a8a;
-    --dim:      #3a3a52;
-  }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: 'Sora', sans-serif;
-    min-height: 100vh;
-  }
-
-  .app {
-    max-width: 780px;
-    margin: 0 auto;
-    padding: 2.5rem 1.5rem 4rem;
-  }
-
-  /* ── Header ── */
-  .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 3rem;
-    padding-bottom: 2rem;
-    border-bottom: 1px solid var(--border);
-  }
-  .logo-mark {
-    width: 10px; height: 10px;
-    background: var(--accent);
-    border-radius: 2px;
-    display: inline-block;
-    margin-right: 8px;
-    box-shadow: 0 0 12px var(--accent);
-  }
-  .app-title {
-    font-size: 1.7rem;
-    font-weight: 800;
-    color: #fff;
-    letter-spacing: -0.04em;
-    display: flex;
-    align-items: center;
-  }
-  .app-sub {
-    font-size: 0.78rem;
-    color: var(--muted);
-    margin-top: 6px;
-    font-family: 'Space Mono', monospace;
-    letter-spacing: 0.02em;
-  }
-
-  /* ── Wallet ── */
-  .wallet-box {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 8px;
-  }
-  .wallet-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .addr-pill {
-    font-family: 'Space Mono', monospace;
-    font-size: 0.78rem;
-    background: var(--surface);
-    border: 1px solid var(--border2);
-    color: var(--accent2);
-    padding: 0.45rem 0.9rem;
-    border-radius: 8px;
-  }
-  .balance {
-    font-family: 'Space Mono', monospace;
-    font-size: 0.75rem;
-    color: var(--muted);
-  }
-  .inst-chip {
-    font-size: 0.65rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    background: rgba(124,110,242,0.15);
-    color: var(--accent2);
-    border: 1px solid rgba(124,110,242,0.3);
-    padding: 0.3rem 0.7rem;
-    border-radius: 6px;
-    text-transform: uppercase;
-  }
-
-  /* ── Buttons ── */
-  .btn {
-    border: none;
-    cursor: pointer;
-    font-family: 'Sora', sans-serif;
-    font-weight: 600;
-    transition: all 0.15s ease;
-    border-radius: 10px;
-  }
-  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
-  .btn-primary {
-    background: var(--accent);
-    color: #fff;
-    padding: 0.65rem 1.5rem;
-    font-size: 0.9rem;
-    box-shadow: 0 0 20px rgba(124,110,242,0.35);
-  }
-  .btn-primary:hover:not(:disabled) {
-    background: var(--accent2);
-    box-shadow: 0 0 28px rgba(124,110,242,0.5);
-    transform: translateY(-1px);
-  }
-  .btn-outline {
-    background: transparent;
-    color: var(--muted);
-    border: 1px solid var(--border2);
-    padding: 0.55rem 1rem;
-    font-size: 0.82rem;
-  }
-  .btn-outline:hover { border-color: var(--dim); color: var(--text); }
-  .btn-green {
-    background: rgba(52,211,153,0.12);
-    color: var(--green);
-    border: 1px solid rgba(52,211,153,0.25);
-    padding: 0.65rem 1.8rem;
-    font-size: 0.9rem;
-  }
-  .btn-green:hover:not(:disabled) {
-    background: rgba(52,211,153,0.2);
-    border-color: rgba(52,211,153,0.5);
-  }
-  .btn-red {
-    background: rgba(248,113,113,0.1);
-    color: var(--red);
-    border: 1px solid rgba(248,113,113,0.2);
-    padding: 0.4rem 0.9rem;
-    font-size: 0.78rem;
-    border-radius: 8px;
-  }
-  .btn-red:hover:not(:disabled) { background: rgba(248,113,113,0.18); }
-
-  /* ── Tabs ── */
-  .tabs {
-    display: flex;
-    gap: 4px;
-    margin-bottom: 2.5rem;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 4px;
-    width: fit-content;
-  }
-  .tab {
-    border: none;
-    cursor: pointer;
-    font-family: 'Sora', sans-serif;
-    font-weight: 500;
-    font-size: 0.88rem;
-    padding: 0.6rem 1.4rem;
-    border-radius: 9px;
-    transition: all 0.2s ease;
-    color: var(--muted);
-    background: transparent;
-  }
-  .tab.active {
-    background: var(--border2);
-    color: #fff;
-    font-weight: 600;
-  }
-  .tab:hover:not(.active) { color: var(--text); }
-
-  /* ── Verify Box ── */
-  .verify-wrap {
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 3.5rem 2rem;
-    text-align: center;
-    background: var(--surface);
-  }
-  .verify-icon {
-    font-size: 3rem;
-    margin-bottom: 1.2rem;
-    display: block;
-  }
-  .verify-label {
-    font-size: 1rem;
-    color: var(--muted);
-    margin-bottom: 1.8rem;
-    font-weight: 400;
-  }
-  .verify-row {
-    display: flex;
-    gap: 10px;
-    max-width: 460px;
-    margin: 0 auto;
-  }
-
-  /* ── Inputs ── */
-  .input {
-    width: 100%;
-    background: var(--bg);
-    border: 1px solid var(--border2);
-    border-radius: 10px;
-    padding: 0.75rem 1rem;
-    font-size: 0.95rem;
-    font-family: 'Sora', sans-serif;
-    color: var(--text);
-    outline: none;
-    transition: border-color 0.2s;
-    margin-bottom: 1rem;
-  }
-  .input::placeholder { color: var(--dim); }
-  .input:focus { border-color: var(--accent); }
-  .input.mono { font-family: 'Space Mono', monospace; font-size: 0.85rem; }
-  .label {
-    display: block;
-    font-size: 0.78rem;
-    font-weight: 600;
-    color: var(--muted);
-    margin-bottom: 0.45rem;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-  }
-
-  /* ── Form Box ── */
-  .form-box {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 2.5rem;
-  }
-  .grid2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.2rem;
-  }
-
-  /* ── Cert Card ── */
-  .cert-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 18px;
-    padding: 1.8rem;
-    margin-bottom: 1rem;
-    position: relative;
-    overflow: hidden;
-    transition: border-color 0.2s;
-  }
-  .cert-card:hover { border-color: var(--border2); }
-  .cert-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-    background: linear-gradient(90deg, var(--accent), var(--accent2));
-    opacity: 0.6;
-  }
-  .cert-card.revoked::before { background: var(--red); }
-  .cert-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 1.5rem;
-  }
-  .cert-name {
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: #fff;
-    letter-spacing: -0.02em;
-  }
-  .cert-degree {
-    font-size: 0.88rem;
-    color: var(--muted);
-    margin-top: 4px;
-  }
-  .badge {
-    font-size: 0.68rem;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    padding: 0.35rem 0.8rem;
-    border-radius: 6px;
-    flex-shrink: 0;
-  }
-  .badge-valid {
-    background: rgba(52,211,153,0.1);
-    color: var(--green);
-    border: 1px solid rgba(52,211,153,0.25);
-  }
-  .badge-revoked {
-    background: rgba(248,113,113,0.1);
-    color: var(--red);
-    border: 1px solid rgba(248,113,113,0.2);
-  }
-  .cert-meta {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1rem;
-    padding-top: 1.2rem;
-    border-top: 1px solid var(--border);
-  }
-  .meta-item { display: flex; flex-direction: column; gap: 4px; }
-  .meta-label { font-size: 0.7rem; color: var(--dim); text-transform: uppercase; letter-spacing: 0.06em; }
-  .meta-val { font-size: 0.85rem; color: var(--text); font-weight: 500; }
-  .meta-val.mono { font-family: 'Space Mono', monospace; font-size: 0.72rem; color: var(--muted); }
-  .cert-actions { margin-top: 1.2rem; }
-
-  /* ── Section title ── */
-  .section-title {
-    font-size: 0.8rem;
-    font-weight: 700;
-    color: var(--muted);
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    margin-bottom: 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .section-title::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--border);
-  }
-
-  /* ── Alerts ── */
-  .alert {
-    padding: 0.8rem 1.2rem;
-    border-radius: 10px;
-    font-size: 0.85rem;
-    margin-bottom: 1rem;
-    font-weight: 500;
-  }
-  .alert-err {
-    background: rgba(248,113,113,0.08);
-    border: 1px solid rgba(248,113,113,0.2);
-    color: var(--red);
-  }
-  .alert-ok {
-    background: rgba(52,211,153,0.08);
-    border: 1px solid rgba(52,211,153,0.2);
-    color: var(--green);
-  }
-
-  /* ── Empty ── */
-  .empty {
-    text-align: center;
-    padding: 4rem 0;
-    color: var(--dim);
-    font-size: 0.9rem;
-  }
-
-  /* ── Divider ── */
-  .divider { height: 1px; background: var(--border); margin: 1.5rem 0; }
-
-  @media (max-width: 600px) {
-    .grid2 { grid-template-columns: 1fr; }
-    .cert-meta { grid-template-columns: 1fr 1fr; }
-    .verify-row { flex-direction: column; }
-    .header { flex-direction: column; gap: 1rem; }
-    .wallet-box { align-items: flex-start; }
-  }
-`;
-
 // ─── Cert Card Component ───────────────────────────────────────
-function CertCard({ cert, onRevoke, canRevoke, txLoading }) {
+function CertCard({ cert, onRevoke, canRevoke, txLoading }: any) {
   const revoked = cert.is_revoked;
   return (
-    <div className={`cert-card ${revoked ? "revoked" : ""}`}>
-      <div className="cert-top">
+    <Card className={`relative overflow-hidden ${revoked ? "border-red-200 bg-red-50/10" : "border-slate-200"}`}>
+      <div className={`absolute top-0 left-0 right-0 h-1 ${revoked ? "bg-red-500" : "bg-indigo-500"}`} />
+      <CardHeader className="flex flex-row items-start justify-between space-y-0">
         <div>
-          <div className="cert-name">{cert.name}</div>
-          <div className="cert-degree">{cert.degree}</div>
+          <CardTitle className="text-xl font-bold">{cert.name}</CardTitle>
+          <CardDescription className="text-slate-500 mt-1">{cert.degree}</CardDescription>
         </div>
-        <span className={`badge ${revoked ? "badge-revoked" : "badge-valid"}`}>
+        <Badge variant={revoked ? "destructive" : "secondary"} className={revoked ? "" : "bg-emerald-100 text-emerald-700 hover:bg-emerald-200 border-emerald-200"}>
           {revoked ? "Revoked" : "Valid"}
-        </span>
-      </div>
-      <div className="cert-meta">
-        <div className="meta-item">
-          <span className="meta-label">Institution</span>
-          <span className="meta-val">{cert.institution}</span>
+        </Badge>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t border-slate-100">
+          <div className="space-y-1">
+            <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-400">Institution</span>
+            <p className="text-sm font-medium text-slate-700">{cert.institution}</p>
+          </div>
+          <div className="space-y-1">
+            <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-400">Issued Date</span>
+            <p className="text-sm font-medium text-slate-700">{formatDate(cert.issued_at)}</p>
+          </div>
+          <div className="space-y-1">
+            <span className="text-[10px] uppercase tracking-wider font-semibold text-slate-400">Certificate ID</span>
+            <p className="text-sm font-mono text-slate-500 truncate">{cert.id?.toString()}</p>
+          </div>
         </div>
-        <div className="meta-item">
-          <span className="meta-label">Issued</span>
-          <span className="meta-val">{formatDate(cert.issued_at)}</span>
-        </div>
-        <div className="meta-item">
-          <span className="meta-label">Cert ID</span>
-          <span className="meta-val mono">{cert.id?.toString().slice(0, 14)}…</span>
-        </div>
-      </div>
+      </CardContent>
       {canRevoke && !revoked && (
-        <div className="cert-actions">
-          <button
-            className="btn btn-red"
+        <CardFooter className="flex justify-end pt-0">
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
             onClick={() => onRevoke(cert.id)}
             disabled={txLoading}
           >
+            {txLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
             Revoke Certificate
-          </button>
-        </div>
+          </Button>
+        </CardFooter>
       )}
-    </div>
+    </Card>
   );
 }
 
 // ─── Main App ─────────────────────────────────────────────────
 export default function App() {
   const {
-    publicKey, isWalletConnected, walletLoading, walletError,
-    connectWallet, disconnectWallet,
-    readContract, writeContract,
-    txLoading, txError, txSuccess, xlmBalance,
+    publicKey,
+    isWalletConnected,
+    walletLoading,
+    walletError,
+    connectWallet,
+    disconnectWallet,
+    readContract,
+    writeContract,
+    txLoading,
+    txError,
+    txSuccess,
+    xlmBalance,
   } = useContract();
 
   const [tab, setTab] = useState("verify");
   const [isInstitution, setIsInstitution] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const [verifyId, setVerifyId] = useState("");
-  const [verifyResult, setVerifyResult] = useState(null);
+  const [verifyResult, setVerifyResult] = useState<any>(null);
   const [verifyError, setVerifyError] = useState("");
   const [verifyLoading, setVerifyLoading] = useState(false);
 
-  const [myCerts, setMyCerts] = useState([]);
+  const [myCerts, setMyCerts] = useState<any[]>([]);
   const [certsLoading, setCertsLoading] = useState(false);
+  const [issuedCertId, setIssuedCertId] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const [form, setForm] = useState({ recipient: "", name: "", degree: "", institution: "" });
+  const [newInstAddr, setNewInstAddr] = useState("");
 
   // ── Effects ─────────────────────────────────────────────────
   useEffect(() => {
-    if (!isWalletConnected) { setIsInstitution(false); return; }
+    if (!isWalletConnected) {
+      setIsInstitution(false);
+      setIsAdmin(false);
+      return;
+    }
     checkIsInstitution();
+    checkIsAdmin();
   }, [isWalletConnected, publicKey]);
 
   useEffect(() => {
     if (tab === "mycerts" && isWalletConnected) loadMyCerts();
   }, [tab, isWalletConnected]);
-
-  // paste ini di console saat app terbuka dan wallet connected
-  document.querySelector('.addr-pill')
 
   // ── Contract calls ──────────────────────────────────────────
   async function checkIsInstitution() {
@@ -477,7 +152,18 @@ export default function App() {
         new Address(publicKey).toScVal(),
       ]);
       setIsInstitution(!!result);
-    } catch { setIsInstitution(false); }
+    } catch {
+      setIsInstitution(false);
+    }
+  }
+
+  async function checkIsAdmin() {
+    try {
+      const adminAddr = await readContract("get_admin");
+      setIsAdmin(publicKey === adminAddr);
+    } catch {
+      setIsAdmin(false);
+    }
   }
 
   async function loadMyCerts() {
@@ -487,12 +173,16 @@ export default function App() {
         new Address(publicKey).toScVal(),
       ]);
       setMyCerts(data || []);
-    } catch { setMyCerts([]); }
-    finally { setCertsLoading(false); }
+    } catch {
+      setMyCerts([]);
+    } finally {
+      setCertsLoading(false);
+    }
   }
 
   async function handleVerify() {
-    setVerifyError(""); setVerifyResult(null);
+    setVerifyError("");
+    setVerifyResult(null);
     if (!verifyId.trim()) return;
     setVerifyLoading(true);
     try {
@@ -502,12 +192,14 @@ export default function App() {
       setVerifyResult(cert);
     } catch {
       setVerifyError("Certificate not found on the blockchain.");
-    } finally { setVerifyLoading(false); }
+    } finally {
+      setVerifyLoading(false);
+    }
   }
 
   async function handleIssue() {
     try {
-      await writeContract("issue_certificate", [
+      const res: any = await writeContract("issue_certificate", [
         new Address(publicKey).toScVal(),
         new Address(form.recipient).toScVal(),
         nativeToScVal(form.name, { type: "string" }),
@@ -515,10 +207,14 @@ export default function App() {
         nativeToScVal(form.institution, { type: "string" }),
       ]);
       setForm({ recipient: "", name: "", degree: "", institution: "" });
+      if (res?.returnValue) {
+        setIssuedCertId(res.returnValue.toString());
+      }
+      if (tab === "mycerts") loadMyCerts();
     } catch { }
   }
 
-  async function handleRevoke(certId) {
+  async function handleRevoke(certId: any) {
     try {
       await writeContract("revoke_certificate", [
         new Address(publicKey).toScVal(),
@@ -528,189 +224,401 @@ export default function App() {
     } catch { }
   }
 
+  async function handleRegisterInstitution() {
+    if (!newInstAddr.trim()) return;
+    try {
+      await writeContract("register_institution", [
+        new Address(publicKey as string).toScVal(),
+        new Address(newInstAddr.trim()).toScVal(),
+      ]);
+      setNewInstAddr("");
+    } catch { }
+  }
+
   const canIssue = form.recipient && form.name && form.degree && form.institution;
 
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
-    <>
-      <style>{CSS}</style>
-      <div className="app">
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-indigo-100">
+      <div className="max-w-4xl mx-auto px-6 py-10">
 
         {/* ── Header ── */}
-        <div className="header">
-          <div>
-            <div className="app-title">
-              <span className="logo-mark" />
-              IjazahVerify
+        <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
+          <div className="space-y-1">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-200">
+                <GraduationCap className="text-white w-6 h-6" />
+              </div>
+              <h1 className="text-3xl font-extrabold tracking-tight text-slate-900">
+                Ijazah<span className="text-indigo-600">Verify</span>
+              </h1>
             </div>
-            <div className="app-sub">on-chain · stellar testnet · soroban</div>
+            <p className="text-slate-500 font-medium flex items-center gap-2 text-sm pl-1">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              Stellar Testnet · Soroban Smart Contracts
+            </p>
           </div>
 
-          {isWalletConnected ? (
-            <div className="wallet-box">
-              <div className="wallet-row">
-                <span className="addr-pill">{shortAddr(publicKey)}</span>
-                {isInstitution && <span className="inst-chip">Institution</span>}
-                <button className="btn btn-outline" onClick={disconnectWallet}>Logout</button>
+          <div className="flex items-center gap-3">
+            {isWalletConnected ? (
+              <div className="flex flex-col items-end gap-2">
+                <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-full pl-4 pr-1 py-1 shadow-sm">
+                  <div className="flex flex-col mr-2">
+                    <span className="text-[10px] font-bold text-slate-400 leading-tight uppercase">Wallet</span>
+                    <span className="text-xs font-mono font-medium text-slate-600 leading-tight">{shortAddr(publicKey)}</span>
+                  </div>
+                  {isInstitution && (
+                    <Badge variant="outline" className="mr-1 bg-indigo-50 text-indigo-700 border-indigo-100 py-0.5">
+                      Institution
+                    </Badge>
+                  )}
+                  {isAdmin && (
+                    <Badge variant="outline" className="mr-1 bg-amber-50 text-amber-700 border-amber-100 py-0.5">
+                      Admin
+                    </Badge>
+                  )}
+                  <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 text-slate-400 hover:text-red-500" onClick={disconnectWallet}>
+                    <LogOut className="w-4 h-4" />
+                  </Button>
+                </div>
+                {xlmBalance && (
+                  <span className="text-[10px] font-bold text-slate-400 tracking-wide uppercase px-2">
+                    {parseFloat(xlmBalance).toFixed(2)} XLM
+                  </span>
+                )}
               </div>
-              {xlmBalance && (
-                <span className="balance">{parseFloat(xlmBalance).toFixed(2)} XLM</span>
-              )}
-            </div>
-          ) : (
-            <button className="btn btn-primary" onClick={connectWallet} disabled={walletLoading}>
-              {walletLoading ? "Connecting…" : "Connect Wallet"}
-            </button>
-          )}
-        </div>
+            ) : (
+              <Button onClick={connectWallet} disabled={walletLoading} className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full px-6 shadow-indigo-200 shadow-lg">
+                {walletLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Wallet className="w-4 h-4 mr-2" />}
+                Connect Wallet
+              </Button>
+            )}
+          </div>
+        </header>
 
         {/* ── Global Alerts ── */}
-        {walletError && <div className="alert alert-err">⚠ {walletError}</div>}
-        {txError && <div className="alert alert-err">⚠ {txError}</div>}
-        {txSuccess && <div className="alert alert-ok">✓ Transaction successfully confirmed</div>}
-
-        {/* ── Tabs ── */}
-        <div className="tabs">
-          <button
-            className={`tab ${tab === "verify" ? "active" : ""}`}
-            onClick={() => setTab("verify")}
-          >Verify</button>
-
-          {isWalletConnected && (
-            <button
-              className={`tab ${tab === "mycerts" ? "active" : ""}`}
-              onClick={() => setTab("mycerts")}
-            >My Certificates</button>
+        <div className="space-y-4 mb-8">
+          {walletError && (
+            <Alert variant="destructive" className="border-red-200 bg-red-50/50">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Wallet Connection Error</AlertTitle>
+              <AlertDescription>{walletError}</AlertDescription>
+            </Alert>
           )}
-
-          {isInstitution && (
-            <button
-              className={`tab ${tab === "issue" ? "active" : ""}`}
-              onClick={() => setTab("issue")}
-            >Issue</button>
+          {txError && (
+            <Alert variant="destructive" className="border-red-200 bg-red-50/50">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Transaction Failed</AlertTitle>
+              <AlertDescription>{txError}</AlertDescription>
+            </Alert>
+          )}
+          {txSuccess && (
+            <Alert className="border-emerald-200 bg-emerald-50/50 text-emerald-800">
+              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+              <AlertTitle>Success</AlertTitle>
+              <AlertDescription>Transaction confirmed on-chain!</AlertDescription>
+            </Alert>
           )}
         </div>
 
-        {/* ── Tab: Verifikasi ── */}
-        {tab === "verify" && (
-          <>
-            <div className="verify-wrap">
-              <span className="verify-icon">🔎</span>
-              <p className="verify-label">Enter certificate ID for on-chain verification</p>
-              <div className="verify-row">
-                <input
-                  className="input mono"
-                  style={{ margin: 0, flex: 1 }}
-                  placeholder="Example: 6404313042471320653"
-                  value={verifyId}
-                  onChange={e => setVerifyId(e.target.value)}
-                  onKeyDown={e => e.key === "Enter" && handleVerify()}
-                />
-                <button
-                  className="btn btn-primary"
-                  onClick={handleVerify}
-                  disabled={verifyLoading || !verifyId.trim()}
-                  style={{ flexShrink: 0 }}
-                >
-                  {verifyLoading ? "Checking…" : "Check"}
-                </button>
-              </div>
-            </div>
-
-            {verifyError && (
-              <div className="alert alert-err" style={{ marginTop: "1rem" }}>{verifyError}</div>
+        {/* ── Main Navigation ── */}
+        <Tabs value={tab} onValueChange={setTab} className="space-y-8">
+          <TabsList className="grid w-full grid-cols-3 md:w-[400px] h-12 p-1 bg-slate-200/50 rounded-xl">
+            <TabsTrigger value="verify" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm">
+              <Search className="w-4 h-4 mr-2" />
+              Verify
+            </TabsTrigger>
+            <TabsTrigger
+              value="mycerts"
+              disabled={!isWalletConnected}
+              className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm disabled:opacity-50"
+            >
+              <History className="w-4 h-4 mr-2" />
+              My Certs
+            </TabsTrigger>
+            <TabsTrigger
+              value="issue"
+              disabled={!isInstitution}
+              className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm disabled:opacity-50"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Issue
+            </TabsTrigger>
+            {isAdmin && (
+              <TabsTrigger
+                value="admin"
+                className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm"
+              >
+                <Shield className="w-4 h-4 mr-2" />
+                Admin
+              </TabsTrigger>
             )}
+          </TabsList>
+
+          {/* ── Tab: Verify ── */}
+          <TabsContent value="verify" className="space-y-6">
+            <Card className="border-none shadow-xl shadow-slate-200/60 overflow-hidden">
+              <CardHeader className="bg-white pb-8">
+                <CardTitle className="text-2xl">On-Chain Verification</CardTitle>
+                <CardDescription>
+                  Verify any certificate instantly using its unique identification number.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="bg-white">
+                <div className="flex flex-col md:flex-row gap-3">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <Input
+                      placeholder="Enter Certificate ID (e.g. 1640431304247...)"
+                      className="pl-10 h-12 bg-slate-50 border-slate-200 focus:ring-indigo-500 rounded-xl font-mono text-sm"
+                      value={verifyId}
+                      onChange={e => setVerifyId(e.target.value)}
+                      onKeyDown={e => e.key === "Enter" && handleVerify()}
+                    />
+                  </div>
+                  <Button
+                    onClick={handleVerify}
+                    disabled={verifyLoading || !verifyId.trim()}
+                    className="h-12 px-8 bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-lg shadow-indigo-100"
+                  >
+                    {verifyLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Verify Now"}
+                  </Button>
+                </div>
+
+                {verifyError && (
+                  <div className="mt-6 p-4 rounded-xl bg-red-50 border border-red-100 text-red-700 text-sm flex items-center gap-3">
+                    <AlertCircle className="w-4 h-4" />
+                    {verifyError}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
             {verifyResult && (
-              <div style={{ marginTop: "2rem" }}>
-                <div className="section-title">Verification Results</div>
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="flex items-center gap-3 mb-4">
+                  <ShieldCheck className="w-5 h-5 text-indigo-600" />
+                  <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400">Result Found</h3>
+                </div>
                 <CertCard cert={verifyResult} canRevoke={false} onRevoke={() => { }} txLoading={false} />
               </div>
             )}
-          </>
-        )}
+          </TabsContent>
 
-        {/* ── Tab: Ijazah Saya ── */}
-        {tab === "mycerts" && (
-          <>
-            <div className="section-title">
-              Certificates belonging to {shortAddr(publicKey)}
+          {/* ── Tab: My Certificates ── */}
+          <TabsContent value="mycerts" className="space-y-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-bold uppercase tracking-widest text-slate-400">Owned Certificates</h3>
+              <Badge variant="outline" className="text-slate-500">{myCerts.length} Total</Badge>
             </div>
+
             {certsLoading ? (
-              <div className="empty">Loading…</div>
+              <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-dashed border-slate-200">
+                <Loader2 className="w-10 h-10 text-indigo-600 animate-spin mb-4" />
+                <p className="text-slate-500 font-medium">Querying blockchain...</p>
+              </div>
             ) : myCerts.length === 0 ? (
-              <div className="empty">No certificates registered for this wallet.</div>
+              <div className="flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-dashed border-slate-200 text-center">
+                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+                  <History className="w-8 h-8 text-slate-300" />
+                </div>
+                <h4 className="text-slate-900 font-bold text-lg">No Certificates Found</h4>
+                <p className="text-slate-500 max-w-xs mt-2">
+                  There are no certificates registered for this wallet address on the network.
+                </p>
+              </div>
             ) : (
-              myCerts.map(cert => (
-                <CertCard
-                  key={cert.id?.toString()}
-                  cert={cert}
-                  canRevoke={isInstitution}
-                  onRevoke={handleRevoke}
-                  txLoading={txLoading}
-                />
-              ))
+              <div className="grid grid-cols-1 gap-4">
+                {myCerts.map(cert => (
+                  <CertCard
+                    key={cert.id?.toString()}
+                    cert={cert}
+                    canRevoke={isInstitution}
+                    onRevoke={handleRevoke}
+                    txLoading={txLoading}
+                  />
+                ))}
+              </div>
             )}
-          </>
-        )}
+          </TabsContent>
 
-        {/* ── Tab: Terbitkan ── */}
-        {tab === "issue" && isInstitution && (
-          <>
-            <div className="section-title">Issue New Certificate</div>
-            <div className="form-box">
-
-              <label className="label">Recipient Wallet</label>
-              <input
-                className="input mono"
-                placeholder="GABC...XYZ"
-                value={form.recipient}
-                onChange={e => setForm({ ...form, recipient: e.target.value })}
-              />
-
-              <div className="grid2">
-                <div>
-                  <label className="label">Full Name</label>
-                  <input
-                    className="input"
-                    placeholder="John Doe"
-                    value={form.name}
-                    onChange={e => setForm({ ...form, name: e.target.value })}
+          {/* ── Tab: Issue ── */}
+          <TabsContent value="issue" className="space-y-6">
+            <Card className="border-none shadow-xl shadow-slate-200/60">
+              <CardHeader>
+                <CardTitle>Issue New Credentials</CardTitle>
+                <CardDescription>
+                  Create a permanent, verifiable certificate for a recipient.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="recipient" className="text-slate-700 font-semibold">Recipient Wallet Address</Label>
+                  <Input
+                    id="recipient"
+                    placeholder="GABC...XYZ"
+                    className="h-11 bg-slate-50 border-slate-200 rounded-lg font-mono"
+                    value={form.recipient}
+                    onChange={e => setForm({ ...form, recipient: e.target.value })}
                   />
                 </div>
-                <div>
-                  <label className="label">Degree / Major</label>
-                  <input
-                    className="input"
-                    placeholder="B.Sc — Computer Science"
-                    value={form.degree}
-                    onChange={e => setForm({ ...form, degree: e.target.value })}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name" className="text-slate-700 font-semibold">Student Full Name</Label>
+                    <Input
+                      id="name"
+                      placeholder="Jane Doe"
+                      className="h-11 bg-slate-50 border-slate-200 rounded-lg"
+                      value={form.name}
+                      onChange={e => setForm({ ...form, name: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="degree" className="text-slate-700 font-semibold">Degree / Certification</Label>
+                    <Input
+                      id="degree"
+                      placeholder="Master of Science"
+                      className="h-11 bg-slate-50 border-slate-200 rounded-lg"
+                      value={form.degree}
+                      onChange={e => setForm({ ...form, degree: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="institution" className="text-slate-700 font-semibold">Issuing Institution</Label>
+                  <Input
+                    id="institution"
+                    placeholder="Global Tech University"
+                    className="h-11 bg-slate-50 border-slate-200 rounded-lg"
+                    value={form.institution}
+                    onChange={e => setForm({ ...form, institution: e.target.value })}
                   />
+                </div>
+              </CardContent>
+              <CardFooter className="bg-slate-50/50 border-t border-slate-100 flex justify-end py-4">
+                <Button
+                  onClick={handleIssue}
+                  disabled={txLoading || !canIssue}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg px-8 py-6 h-auto text-lg shadow-lg shadow-emerald-100"
+                >
+                  {txLoading ? (
+                    <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Confirming...</>
+                  ) : (
+                    <><Plus className="w-5 h-5 mr-2" /> Issue Certificate</>
+                  )}
+                </Button>
+              </CardFooter>
+            </Card>
+          </TabsContent>
+          {/* ── Tab: Admin ── */}
+          {isAdmin && (
+            <TabsContent value="admin" className="space-y-6">
+              <Card className="border-none shadow-xl shadow-slate-200/60">
+                <CardHeader>
+                  <CardTitle>Institution Management</CardTitle>
+                  <CardDescription>
+                    Authorize new wallet addresses to issue academic certificates.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="inst-addr" className="text-slate-700 font-semibold">Institution Wallet Address</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="inst-addr"
+                        placeholder="GABC...XYZ"
+                        className="h-11 bg-slate-50 border-slate-200 rounded-lg font-mono"
+                        value={newInstAddr}
+                        onChange={e => setNewInstAddr(e.target.value)}
+                      />
+                      <Button
+                        onClick={handleRegisterInstitution}
+                        disabled={txLoading || !newInstAddr.trim()}
+                        className="h-11 px-6 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg"
+                      >
+                        {txLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Register"}
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          )}
+        </Tabs>
+
+        {/* ── Footer ── */}
+        <footer className="mt-20 pt-8 border-t border-slate-200 text-center text-slate-400">
+          <p className="text-xs font-medium tracking-widest uppercase">
+            Built with Soroban & Stellar · Secure Academic Verification
+          </p>
+        </footer>
+      </div>
+
+      {/* ── Success Modal ── */}
+      {issuedCertId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
+          <Card className="w-full max-w-md shadow-2xl border-none overflow-hidden animate-in zoom-in-95 duration-300">
+            <div className="h-2 bg-emerald-500" />
+            <CardHeader className="text-center pb-2">
+              <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <ShieldCheck className="w-8 h-8 text-emerald-600" />
+              </div>
+              <CardTitle className="text-2xl font-bold">Certificate Issued!</CardTitle>
+              <CardDescription>
+                The certificate has been successfully recorded on the blockchain.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6 pt-4">
+              <div className="space-y-2">
+                <Label className="text-[10px] uppercase tracking-widest font-bold text-slate-400">Your Certificate ID</Label>
+                <div className="flex items-center gap-2 p-4 bg-slate-50 border border-slate-200 rounded-xl group relative">
+                  <code className="text-sm font-mono font-bold text-indigo-600 break-all flex-1">
+                    {issuedCertId}
+                  </code>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="shrink-0 hover:bg-white hover:text-indigo-600"
+                    onClick={() => handleCopy(issuedCertId)}
+                  >
+                    {copied ? <Check className="w-4 h-4 text-emerald-500" /> : <Copy className="w-4 h-4" />}
+                  </Button>
                 </div>
               </div>
-
-              <label className="label">Institution Name</label>
-              <input
-                className="input"
-                placeholder="Nusantara University"
-                value={form.institution}
-                onChange={e => setForm({ ...form, institution: e.target.value })}
-              />
-
-              <div className="divider" />
-
-              <button
-                className="btn btn-green"
-                onClick={handleIssue}
-                disabled={txLoading || !canIssue}
+              <p className="text-xs text-center text-slate-500 italic">
+                Save this ID to verify the certificate authenticity anytime.
+              </p>
+            </CardContent>
+            <CardFooter className="bg-slate-50 p-4 flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1 rounded-xl h-12"
+                onClick={() => {
+                  setTab("verify");
+                  setVerifyId(issuedCertId);
+                  setIssuedCertId(null);
+                }}
               >
-                {txLoading ? "Issuing…" : "Issue Certificate"}
-              </button>
-            </div>
-          </>
-        )}
-
-      </div>
-    </>
-
+                <Search className="w-4 h-4 mr-2" />
+                Test Verify
+              </Button>
+              <Button
+                className="flex-1 bg-indigo-600 hover:bg-indigo-700 rounded-xl h-12"
+                onClick={() => setIssuedCertId(null)}
+              >
+                Done
+              </Button>
+            </CardFooter>
+          </Card>
+        </div>
+      )}
+    </div>
   );
 }
