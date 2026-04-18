@@ -403,16 +403,16 @@ function CertCard({ cert, onRevoke, canRevoke, txLoading }) {
           <div className="cert-degree">{cert.degree}</div>
         </div>
         <span className={`badge ${revoked ? "badge-revoked" : "badge-valid"}`}>
-          {revoked ? "Dicabut" : "Valid"}
+          {revoked ? "Revoked" : "Valid"}
         </span>
       </div>
       <div className="cert-meta">
         <div className="meta-item">
-          <span className="meta-label">Institusi</span>
+          <span className="meta-label">Institution</span>
           <span className="meta-val">{cert.institution}</span>
         </div>
         <div className="meta-item">
-          <span className="meta-label">Terbit</span>
+          <span className="meta-label">Issued</span>
           <span className="meta-val">{formatDate(cert.issued_at)}</span>
         </div>
         <div className="meta-item">
@@ -427,7 +427,7 @@ function CertCard({ cert, onRevoke, canRevoke, txLoading }) {
             onClick={() => onRevoke(cert.id)}
             disabled={txLoading}
           >
-            Cabut Ijazah
+            Revoke Certificate
           </button>
         </div>
       )}
@@ -501,7 +501,7 @@ export default function App() {
       ]);
       setVerifyResult(cert);
     } catch {
-      setVerifyError("Sertifikat tidak ditemukan di blockchain.");
+      setVerifyError("Certificate not found on the blockchain.");
     } finally { setVerifyLoading(false); }
   }
 
@@ -549,8 +549,8 @@ export default function App() {
             <div className="wallet-box">
               <div className="wallet-row">
                 <span className="addr-pill">{shortAddr(publicKey)}</span>
-                {isInstitution && <span className="inst-chip">Institusi</span>}
-                <button className="btn btn-outline" onClick={disconnectWallet}>Keluar</button>
+                {isInstitution && <span className="inst-chip">Institution</span>}
+                <button className="btn btn-outline" onClick={disconnectWallet}>Logout</button>
               </div>
               {xlmBalance && (
                 <span className="balance">{parseFloat(xlmBalance).toFixed(2)} XLM</span>
@@ -558,7 +558,7 @@ export default function App() {
             </div>
           ) : (
             <button className="btn btn-primary" onClick={connectWallet} disabled={walletLoading}>
-              {walletLoading ? "Menghubungkan…" : "Hubungkan Wallet"}
+              {walletLoading ? "Connecting…" : "Connect Wallet"}
             </button>
           )}
         </div>
@@ -566,27 +566,27 @@ export default function App() {
         {/* ── Global Alerts ── */}
         {walletError && <div className="alert alert-err">⚠ {walletError}</div>}
         {txError && <div className="alert alert-err">⚠ {txError}</div>}
-        {txSuccess && <div className="alert alert-ok">✓ Transaksi berhasil dikonfirmasi</div>}
+        {txSuccess && <div className="alert alert-ok">✓ Transaction successfully confirmed</div>}
 
         {/* ── Tabs ── */}
         <div className="tabs">
           <button
             className={`tab ${tab === "verify" ? "active" : ""}`}
             onClick={() => setTab("verify")}
-          >Verifikasi</button>
+          >Verify</button>
 
           {isWalletConnected && (
             <button
               className={`tab ${tab === "mycerts" ? "active" : ""}`}
               onClick={() => setTab("mycerts")}
-            >Ijazah Saya</button>
+            >My Certificates</button>
           )}
 
           {isInstitution && (
             <button
               className={`tab ${tab === "issue" ? "active" : ""}`}
               onClick={() => setTab("issue")}
-            >Terbitkan</button>
+            >Issue</button>
           )}
         </div>
 
@@ -595,12 +595,12 @@ export default function App() {
           <>
             <div className="verify-wrap">
               <span className="verify-icon">🔎</span>
-              <p className="verify-label">Masukkan ID sertifikat untuk verifikasi on-chain</p>
+              <p className="verify-label">Enter certificate ID for on-chain verification</p>
               <div className="verify-row">
                 <input
                   className="input mono"
                   style={{ margin: 0, flex: 1 }}
-                  placeholder="Contoh: 6404313042471320653"
+                  placeholder="Example: 6404313042471320653"
                   value={verifyId}
                   onChange={e => setVerifyId(e.target.value)}
                   onKeyDown={e => e.key === "Enter" && handleVerify()}
@@ -611,7 +611,7 @@ export default function App() {
                   disabled={verifyLoading || !verifyId.trim()}
                   style={{ flexShrink: 0 }}
                 >
-                  {verifyLoading ? "Mengecek…" : "Cek"}
+                  {verifyLoading ? "Checking…" : "Check"}
                 </button>
               </div>
             </div>
@@ -622,7 +622,7 @@ export default function App() {
 
             {verifyResult && (
               <div style={{ marginTop: "2rem" }}>
-                <div className="section-title">Hasil Verifikasi</div>
+                <div className="section-title">Verification Results</div>
                 <CertCard cert={verifyResult} canRevoke={false} onRevoke={() => { }} txLoading={false} />
               </div>
             )}
@@ -633,12 +633,12 @@ export default function App() {
         {tab === "mycerts" && (
           <>
             <div className="section-title">
-              Ijazah milik {shortAddr(publicKey)}
+              Certificates belonging to {shortAddr(publicKey)}
             </div>
             {certsLoading ? (
-              <div className="empty">Memuat…</div>
+              <div className="empty">Loading…</div>
             ) : myCerts.length === 0 ? (
-              <div className="empty">Belum ada ijazah yang terdaftar untuk wallet ini.</div>
+              <div className="empty">No certificates registered for this wallet.</div>
             ) : (
               myCerts.map(cert => (
                 <CertCard
@@ -656,10 +656,10 @@ export default function App() {
         {/* ── Tab: Terbitkan ── */}
         {tab === "issue" && isInstitution && (
           <>
-            <div className="section-title">Terbitkan Ijazah Baru</div>
+            <div className="section-title">Issue New Certificate</div>
             <div className="form-box">
 
-              <label className="label">Wallet Penerima</label>
+              <label className="label">Recipient Wallet</label>
               <input
                 className="input mono"
                 placeholder="GABC...XYZ"
@@ -669,29 +669,29 @@ export default function App() {
 
               <div className="grid2">
                 <div>
-                  <label className="label">Nama Lengkap</label>
+                  <label className="label">Full Name</label>
                   <input
                     className="input"
-                    placeholder="Budi Santoso"
+                    placeholder="John Doe"
                     value={form.name}
                     onChange={e => setForm({ ...form, name: e.target.value })}
                   />
                 </div>
                 <div>
-                  <label className="label">Gelar / Program Studi</label>
+                  <label className="label">Degree / Major</label>
                   <input
                     className="input"
-                    placeholder="S.Kom — Teknik Informatika"
+                    placeholder="B.Sc — Computer Science"
                     value={form.degree}
                     onChange={e => setForm({ ...form, degree: e.target.value })}
                   />
                 </div>
               </div>
 
-              <label className="label">Nama Institusi</label>
+              <label className="label">Institution Name</label>
               <input
                 className="input"
-                placeholder="Universitas Nusantara"
+                placeholder="Nusantara University"
                 value={form.institution}
                 onChange={e => setForm({ ...form, institution: e.target.value })}
               />
@@ -703,7 +703,7 @@ export default function App() {
                 onClick={handleIssue}
                 disabled={txLoading || !canIssue}
               >
-                {txLoading ? "Menerbitkan…" : "Terbitkan Ijazah"}
+                {txLoading ? "Issuing…" : "Issue Certificate"}
               </button>
             </div>
           </>

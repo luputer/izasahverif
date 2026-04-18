@@ -1,58 +1,58 @@
 # IjazahVerify 🎓
 
-IjazahVerify adalah platform verifikasi ijazah berbasis blockchain yang berjalan di jaringan **Stellar (Soroban Testnet)**. Sistem ini memungkinkan institusi untuk menerbitkan ijazah secara on-chain, memberikan keamanan dan transparansi penuh terhadap keaslian dokumen pendidikan.
+IjazahVerify is a blockchain-based certificate verification platform running on the **Stellar (Soroban Testnet)** network. This system allows institutions to issue certificates on-chain, providing full security and transparency regarding the authenticity of educational documents.
 
-## 🚀 Fitur Utama
+## 🚀 Key Features
 
-- **Verifikasi Ijazah**: Siapa pun dapat memverifikasi keaslian ijazah menggunakan ID sertifikat.
-- **Penerbitan Ijazah**: Institusi terdaftar dapat menerbitkan ijazah baru ke wallet penerima.
-- **Pencabutan Ijazah**: Institusi dapat menarik kembali ijazah jika terjadi kesalahan atau pembatalan.
-- **Manajemen Institusi**: Admin sistem dapat mendaftarkan alamat wallet sebagai institusi resmi.
+- **Certificate Verification**: Anyone can verify the authenticity of a certificate using its unique Certificate ID.
+- **Certificate Issuance**: Registered institutions can issue new certificates directly to the recipient's wallet.
+- **Certificate Revocation**: Institutions can revoke certificates in case of errors or cancellations.
+- **Institution Management**: System admins can register wallet addresses as official institutions.
 
-## 📁 Struktur Proyek
+## 📁 Project Structure
 
 ```text
 submition/
 ├── contracts/
-│   ├── ijazah-verify/     # Source code Smart Contract (Rust/Soroban)
-│   └── deploy.sh          # Script deployment otomatis
+│   ├── ijazah-verify/     # Smart Contract implementation (Rust/Soroban)
+│   └── deploy.sh          # Automated deployment script
 ├── frontend-rush/         # Web dashboard (React + TS + Vite)
-│   └── .env               # Konfigurasi RPC dan Contract ID
-└── README.md              # Dokumentasi ini
+│   └── .env               # RPC configuration and Contract ID
+└── README.md              # Project documentation
 ```
 
-## 🛠 Panduan Instalasi & Deployment
+## 🛠 Installation & Deployment Guide
 
-### 1. Prasyarat
+### 1. Prerequisites
 - [Rust](https://www.rust-lang.org/) & [Soroban SDK](https://soroban.stellar.org/docs/getting-started/setup)
 - [Stellar CLI](https://developers.stellar.org/docs/build/smart-contracts/getting-started/setup)
-- [Node.js](https://nodejs.org/) & [Bun](https://bun.sh/) (atau npm)
+- [Node.js](https://nodejs.org/) & [Bun](https://bun.sh/) (or npm)
 - [Freighter Wallet](https://www.freighter.app/) Browser Extension
 
 ### 2. Deploy Smart Contract
-Pastikan kamu sudah memiliki identity `alice` di Stellar CLI (`stellar keys add alice`).
+Ensure you have the `alice` identity configured in Stellar CLI (`stellar keys add alice`).
 
 ```bash
 cd submition/contracts
 bash deploy.sh
 ```
-*Script ini akan mem-build, mengoptimasi, men-deploy, dan memperbarui file `.env` di frontend secara otomatis.*
+*This script will build, optimize, deploy the contract, and automatically update the `.env` file in the frontend directory.*
 
-### 3. Menjalankan Frontend
+### 3. Run Frontend
 ```bash
 cd submition/frontend-rush
 bun install
 bun run dev
 ```
-Aplikasi akan berjalan di `http://localhost:5173`.
+The application will be accessible at `http://localhost:5173`.
 
-## 📖 Cara Penggunaan
+## 📖 How to Use
 
-1. **Hubungkan Wallet**: Klik tombol "Hubungkan Wallet" menggunakan Freighter.
-2. **Setup Institusi**: (Hanya Admin) Gunakan `deploy.sh` atau panggil fungsi `register_institution` agar alamat kamu dikenal sebagai institusi.
-3. **Terbitkan Ijazah**: Masuk ke tab "Terbitkan", masukkan detail penerima, dan tanda tangani transaksi.
-4. **Cek Ijazah Saya**: Pemilik wallet dapat melihat daftar ijazah yang mereka miliki di tab "Ijazah Saya".
-5. **Verifikasi Publik**: Masukkan ID sertifikat di halaman utama untuk mengecek keaslian ijazah tanpa perlu login.
+1. **Connect Wallet**: Click the "Connect Wallet" button using the Freighter extension.
+2. **Institution Setup**: (Admin Only) Use the `deploy.sh` script or call the `register_institution` function via CLI to authorize your address as an institution.
+3. **Issue Certificate**: Navigate to the "Issue" (Terbitkan) tab, enter the recipient's details, and sign the transaction.
+4. **My Certificates**: Wallet owners can view their certificates in the "My Certs" (Ijazah Saya) tab.
+5. **Public Verification**: Enter a Certificate ID on the home page to verify authenticity instantly without logging in.
 
 ---
-Dikembangkan untuk **Stellar Workshop**.
+Developed for the **Stellar Workshop**.
