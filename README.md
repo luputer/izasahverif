@@ -52,6 +52,16 @@ The application will be accessible at `http://localhost:5173`.
 - **Contract ID**: `CALFLU7NZTUEE5UPAEFQYDPOO7JMKIOARC2MNDQ7LW2VHRXLBPIZ7CD3`
 - **RPC URL**: `https://soroban-testnet.stellar.org`
 
+## 📸 Testing & Screenshots
+
+### 1. Contract Interaction & Explorer
+Evidence of successful contract deployment and `issue_certificate` invocation on the Stellar Testnet.
+![Testing Status](frontend-rush/src/assets/testing.png)
+
+### 2. Verified Certificate
+Example of a generated certificate successfully verified against the blockchain data.
+![Certificate Example](frontend-rush/src/assets/certficat.png)
+
 ## 📖 How to Use
 
 1. **Connect Wallet**: Click the "Connect Wallet" button using the Freighter extension.
