@@ -643,7 +643,7 @@ export default function App() {
                     onChange={e => setNewInst(e.target.value)}
                   />
                 </Field>
-                <p className="text-xs text-slate-500 -mt-2 mb-6">
+                <p className="text-xs text-slate-500 mt-2 mb-6">
                   Setelah didaftarkan, wallet tersebut otomatis mendapat akses tab "Terbitkan".
                 </p>
 
