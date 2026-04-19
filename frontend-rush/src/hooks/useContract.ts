@@ -192,8 +192,10 @@ export function useContract() {
                         : (confirmation.resultMetaXdr as any).toString("base64");
 
                     const txMeta = xdr.TransactionMeta.fromXDR(metaXdr, "base64");
-                    const resVal = txMeta.v3().sorobanMeta().returnValue();
-                    returnValue = scValToNative(resVal);
+                    const resVal = txMeta.v3()?.sorobanMeta()?.returnValue();
+                    if (resVal) {
+                        returnValue = scValToNative(resVal);
+                    }
                 } catch (e) {
                     console.error("Failed to parse return value:", e);
                 }

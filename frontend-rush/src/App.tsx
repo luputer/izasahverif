@@ -77,10 +77,10 @@ const Icon = {
 };
 
 // ─── Helpers ──────────────────────────────────────────────────
-function shortAddr(addr) {
+function shortAddr(addr: any) {
   return addr ? `${addr.slice(0, 6)}...${addr.slice(-4)}` : "";
 }
-function formatDate(ts) {
+function formatDate(ts: any) {
   if (!ts) return "-";
   return new Date(Number(ts) * 1000).toLocaleDateString("id-ID", {
     day: "numeric", month: "long", year: "numeric",
@@ -88,7 +88,7 @@ function formatDate(ts) {
 }
 
 // ─── Field Component ──────────────────────────────────────────
-function Field({ label, icon: IconComp, children }) {
+function Field({ label, icon: IconComp, children }: any) {
   return (
     <div className="space-y-2">
       <label className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-widest text-slate-400">
@@ -100,26 +100,9 @@ function Field({ label, icon: IconComp, children }) {
   );
 }
 
-// ─── Input Component ──────────────────────────────────────────
-function Input({ mono, amber, className = "", ...props }) {
-  return (
-    <input
-      className={`
-        w-full bg-slate-950 border border-slate-700/60 rounded-xl
-        px-4 py-3 text-sm text-slate-100 placeholder-slate-600
-        outline-none transition-all duration-200
-        focus:border-violet-500 focus:ring-2 focus:ring-violet-500/15
-        ${mono ? "font-mono text-[13px] tracking-tight" : ""}
-        ${amber ? "focus:border-amber-400 focus:ring-amber-400/15" : ""}
-        ${className}
-      `}
-      {...props}
-    />
-  );
-}
 
 // ─── Cert Card ────────────────────────────────────────────────
-function CertCard({ cert, canRevoke, onRevoke, txLoading }) {
+function CertCard({ cert, canRevoke, onRevoke, txLoading }: any) {
   const [copied, setCopied] = useState(false);
   const revoked = cert.is_revoked;
   const certIdStr = cert.id?.toString();
@@ -226,25 +209,25 @@ export default function App() {
 
   // verify
   const [verifyId, setVerifyId] = useState("");
-  const [verifyResult, setVerifyResult] = useState(null);
+  const [verifyResult, setVerifyResult] = useState<any>(null);
   const [verifyError, setVerifyError] = useState("");
   const [verifyLoading, setVerifyLoading] = useState(false);
   const [showCertModal, setShowCertModal] = useState(false);
 
   // my certs
-  const [myCerts, setMyCerts] = useState([]);
+  const [myCerts, setMyCerts] = useState<any[]>([]);
   const [certsLoading, setCertsLoading] = useState(false);
 
   // issue
   const [form, setForm] = useState({ recipient: "", name: "", degree: "", institution: "" });
-  const [issuedId, setIssuedId] = useState(null);
+  const [issuedId, setIssuedId] = useState<any>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // admin
   const [newInst, setNewInst] = useState("");
-  const [adminStatus, setAdminStatus] = useState(null); // "ok" | "err"
+  const [adminStatus, setAdminStatus] = useState<any>(null); // "ok" | "err"
   const [adminLoading, setAdminLoading] = useState(false);
-  const [registeredList, setRegisteredList] = useState([]);
+  const [registeredList, setRegisteredList] = useState<string[]>([]);
 
   // ── Effects ───────────────────────────────────────────────────
   useEffect(() => {
@@ -259,7 +242,7 @@ export default function App() {
   async function checkRoles() {
     try {
       const [inst, admin] = await Promise.all([
-        readContract("is_institution", [new Address(publicKey).toScVal()]),
+        readContract("is_institution", [new Address(publicKey!).toScVal()]),
         readContract("get_admin", []),
       ]);
       setIsInstitution(!!inst);
@@ -272,7 +255,7 @@ export default function App() {
   async function loadMyCerts() {
     setCertsLoading(true);
     try {
-      const data = await readContract("get_certificates_by_owner", [new Address(publicKey).toScVal()]);
+      const data = await readContract("get_certificates_by_owner", [new Address(publicKey!).toScVal()]);
       setMyCerts(data || []);
     } catch { setMyCerts([]); }
     finally { setCertsLoading(false); }
@@ -293,6 +276,7 @@ export default function App() {
   }
 
   async function handleIssue() {
+    if (!publicKey) return;
     try {
       const res = await writeContract("issue_certificate", [
         new Address(publicKey).toScVal(),
@@ -306,7 +290,8 @@ export default function App() {
     } catch { }
   }
 
-  async function handleRevoke(certId) {
+  async function handleRevoke(certId: any) {
+    if (!publicKey) return;
     try {
       await writeContract("revoke_certificate", [
         new Address(publicKey).toScVal(),
@@ -317,7 +302,7 @@ export default function App() {
   }
 
   async function handleRegister() {
-    if (!newInst.trim()) return;
+    if (!publicKey || !newInst.trim()) return;
     setAdminLoading(true); setAdminStatus(null);
     try {
       await writeContract("register_institution", [
