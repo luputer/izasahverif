@@ -181,13 +181,22 @@ export function useContract() {
             if (submitResult.status === "ERROR") throw new Error("Submit failed: " + submitResult.errorResult);
 
             const confirmation = await waitConfirmation(submitResult.hash);
-            
+
             // Extract return value from transaction results
             let returnValue = null;
             if (confirmation.resultMetaXdr) {
-              const txMeta = xdr.TransactionMeta.fromXDR(confirmation.resultMetaXdr, "base64");
-              const resVal = txMeta.v3().sorobanMeta().returnValue();
-              returnValue = scValToNative(resVal);
+                try {
+                    // Robust parsing for resultMetaXdr
+                    const metaXdr = typeof confirmation.resultMetaXdr === "string"
+                        ? confirmation.resultMetaXdr
+                        : (confirmation.resultMetaXdr as any).toString("base64");
+
+                    const txMeta = xdr.TransactionMeta.fromXDR(metaXdr, "base64");
+                    const resVal = txMeta.v3().sorobanMeta().returnValue();
+                    returnValue = scValToNative(resVal);
+                } catch (e) {
+                    console.error("Failed to parse return value:", e);
+                }
             }
 
             setTxSuccess(confirmation.hash);
@@ -204,11 +213,11 @@ export function useContract() {
         for (let i = 0; i < maxTry; i++) {
             const res: any = await server.getTransaction(hash);
             if (res.status === "SUCCESS") {
-              return { 
-                success: true, 
-                hash, 
-                resultMetaXdr: res.resultMetaXdr 
-              };
+                return {
+                    success: true,
+                    hash,
+                    resultMetaXdr: res.resultMetaXdr
+                };
             }
             if (res.status === "FAILED") throw new Error("Transaction failed: " + hash);
             await new Promise((r) => setTimeout(r, 2000));
