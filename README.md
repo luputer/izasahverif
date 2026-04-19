@@ -46,6 +46,12 @@ bun run dev
 ```
 The application will be accessible at `http://localhost:5173`.
 
+## 🌐 Deployment Information (Testnet)
+
+- **Network**: Stellar Testnet
+- **Contract ID**: `CALFLU7NZTUEE5UPAEFQYDPOO7JMKIOARC2MNDQ7LW2VHRXLBPIZ7CD3`
+- **RPC URL**: `https://soroban-testnet.stellar.org`
+
 ## 📖 How to Use
 
 1. **Connect Wallet**: Click the "Connect Wallet" button using the Freighter extension.
